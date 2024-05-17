@@ -3055,15 +3055,10 @@ ModelInstanceState::InitializeExecuteOutputBinding(
   // Check whether the output shape is data-dependent.
   for (auto& trt_context : trt_contexts_) {
     auto& profile_index = trt_context.first;
-    int binding_index = total_io_tensors_ * profile_index + io_index;
     std::cerr
         << "------------\n io_index: "
         << io_index
         << "\n output_name: " << output_name 
-        << "\n "
-           "trt_context.second.context_->getBindingDimensions(binding_index): "
-        //<< DimsDebugString(
-        //       trt_context.second.context_->getBindingDimensions(binding_index))
         << "\n "
            "trt_context.second.context_->getTensorShape(output_name.c_str()): "
         << DimsDebugString(
@@ -3099,12 +3094,6 @@ ModelInstanceState::InitializeExecuteOutputBinding(
     nvinfer1::Dims engine_dims = engine_->getTensorShape(output_name.c_str());
     std::cerr << "------------\n io_index: " << io_index
               << "\n output_name: " << output_name
-              << "\n binding_index: " << binding_index
-              << "\n getBindingName(): "
-              //<< engine_->getBindingName(binding_index)
-              //<< "\n "
-              ////   "engine_->getBindingDimensions(binding_index): "
-              //<< DimsDebugString(engine_->getBindingDimensions(binding_index))
               << "\n engine_->getTensorShape(output_name.c_str()): "
               << DimsDebugString(engine_->getTensorShape(output_name.c_str()))
               << std::endl;
