@@ -3054,7 +3054,6 @@ ModelInstanceState::InitializeExecuteOutputBinding(
 
   // Check whether the output shape is data-dependent.
   for (auto& trt_context : trt_contexts_) {
-    auto& profile_index = trt_context.first;
     std::cerr
         << "------------\n io_index: "
         << io_index
