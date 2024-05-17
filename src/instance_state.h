@@ -1,4 +1,4 @@
-// Copyright 2022-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// Copyright 2022-2024, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -346,7 +346,7 @@ class ModelInstanceState : public TensorRTModelInstance {
       int64_t* error_distance);
 
   bool SetOutputShapeTensorBuffer(
-      const int32_t* content, TRITONBACKEND_Response** response,
+      const int64_t* content, TRITONBACKEND_Response** response,
       TRITONBACKEND_Output* response_output, const size_t tensor_element_count,
       const int64_t batch_size, cudaStream_t stream);
   void ProcessResponse();
@@ -384,13 +384,13 @@ class ModelInstanceState : public TensorRTModelInstance {
   // Whether inexact match is allowed for finding CUDA graph
   bool allow_inexact_match_{false};
 
-  // The number of input and output tensors to the model. In case of dynamic
-  // shapes, it is the number of expected input and output tensors to the
-  // configured optimization profile.
+  // The number of input and output tensors for the network
+  // from which the engine was built.
   int total_io_tensors_{0};
 
   // Mapping from Input/Output Tensor Name to its corresponding Index
-  std::unordered_map<std::string, int> io_index_map_{};
+  std::map<std::string, int> io_index_map_{};
+  std::map<int, std::string> tensor_names_{};
 
   int cuda_stream_priority_{0};
 
