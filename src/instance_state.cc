@@ -1385,7 +1385,7 @@ ModelInstanceState::GetRequestShapeValues(
       }
 
       size_t datatype_size;
-      const size_t expected_byte_size;
+      size_t expected_byte_size;
       if (datatype == TRITONSERVER_DataType::TRITONSERVER_TYPE_INT32) {
         datatype_size = sizeof(int32_t);
         expected_byte_size =
@@ -1397,7 +1397,7 @@ ModelInstanceState::GetRequestShapeValues(
       } else {
         return TRITONSERVER_ErrorNew(
             TRITONSERVER_ERROR_INVALID_ARG,
-            (std::string("Un supported shape tensor data type")));
+            "Un supported shape tensor data type");
       }
 
       bool includes_batch_shape_value = false;
