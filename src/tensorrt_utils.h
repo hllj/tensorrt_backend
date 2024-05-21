@@ -79,10 +79,11 @@ TRITONSERVER_Error* CompareShapeDimsSupported(
 TRITONSERVER_Error* ValidateControlDimsDynamic(
     const nvinfer1::Dims& dims, const bool support_batching);
 
+template <typename T>
 TRITONSERVER_Error* ValidateShapeValues(
-    const std::vector<int32_t>& request_shape_values,
-    const int32_t* min_shape_values, const int32_t* max_shape_values,
-    size_t nb_shape_values, const bool support_batching);
+    const std::vector<T>& request_shape_values, const int32_t* min_shape_values,
+    const int32_t* max_shape_values, size_t nb_shape_values,
+    const bool support_batching);
 
 void DimsToDimVec(const nvinfer1::Dims& model_dims, std::vector<int64_t>* dims);
 
