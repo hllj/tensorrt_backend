@@ -147,4 +147,37 @@ ValidateDimension(
   return nullptr;
 }
 
+template <typename T>
+TRITONSERVER_Error*
+ValidateShapeValues(
+    const std::vector<T>& request_shape_values, const int32_t* min_shape_values,
+    const int32_t* max_shape_values, size_t nb_shape_values,
+    const bool support_batching)
+{
+  if (request_shape_values.size() != nb_shape_values) {
+    return TRITONSERVER_ErrorNew(
+        TRITONSERVER_ERROR_INVALID_ARG,
+        (std::string(
+             "mismatch between the number of shape values. Expecting ") +
+         std::to_string(nb_shape_values) + ". Got " +
+         std::to_string(request_shape_values.size()))
+            .c_str());
+  }
+
+  for (size_t i = 0; i < nb_shape_values; i++) {
+    if (request_shape_values[i] < *(min_shape_values + i) ||
+        request_shape_values[i] > *(max_shape_values + i)) {
+      return TRITONSERVER_ErrorNew(
+          TRITONSERVER_ERROR_INVALID_ARG,
+          (std::string("The shape value at index ") + std::to_string(i) +
+           " is expected to be in range from " +
+           std::to_string(*(min_shape_values + i)) + " to " +
+           std::to_string(*(max_shape_values + i)) +
+           ", Got: " + std::to_string(request_shape_values[i]))
+              .c_str());
+    }
+  }
+  return nullptr;
+}
+
 }}}  // namespace triton::backend::tensorrt
