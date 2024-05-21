@@ -241,6 +241,205 @@ class TRTv3Interface : public TRTInterface {
 #endif  // TRITON_ENABLE_CUDA_GRAPH
 };
 
+
+//
+// enum class ShapeTensorDataType { INT32, INT64 };
+//
+// class ShapeTensor {
+// public:
+//  ShapeTensor()
+//      : data_(nullptr), size_(0), datatype_(ShapeTensorDataType::INT32)
+//  {
+//  }
+//
+//  ~ShapeTensor() { free(data_); }
+//
+//  void SetData(
+//      const void* data, ShapeTensorDataType datatype, size_t size,
+//      bool support_batching = false, size_t total_batch_size = 0)
+//  {
+//    // Free previous data
+//    free(data_);
+//
+//    if (support_batching) {
+//      size_ = size + 1;
+//    } else {
+//      size_ = size;
+//    }
+//
+//    size_t data_size =
+//        size_ * (datatype == ShapeTensorDataType::INT32 ? sizeof(int32_t)
+//                                                        : sizeof(int64_t));
+//    data_ = malloc(data_size);
+//
+//    if (support_batching) {
+//      if (datatype == ShapeTensorDataType::INT32) {
+//        std::memcpy(data_, &total_batch_size, sizeof(int32_t));
+//        std::memcpy(
+//            static_cast<int32_t*>(data_) + 1, data, size * sizeof(int32_t));
+//      } else if (datatype == ShapeTensorDataType::INT64) {
+//        std::memcpy(data_, &total_batch_size, sizeof(int64_t));
+//        std::memcpy(
+//            static_cast<int64_t*>(data_) + 1, data, size * sizeof(int64_t));
+//      }
+//    } else {
+//      std::memcpy(data_, data, data_size);
+//    }
+//
+//    datatype_ = datatype;
+//  }
+//
+// private:
+//  void* data_;
+//  size_t size_;
+//  ShapeTensorDataType datatype_;
+//};
+
+
+// enum class ShapeTensorDataType { INT32, INT64 };
+//
+// class ShapeTensor {
+//  public:
+//   void SetData(
+//       const void* data, ShapeTensorDataType datatype, size_t size,
+//       bool support_batching = false, size_t total_batch_size = 0)
+//   {
+//     datatype_ = datatype;
+//     size_t element_size = (datatype == ShapeTensorDataType::INT32)
+//                               ? sizeof(int32_t)
+//                               : sizeof(int64_t);
+//     size_t total_size = size * element_size;
+//
+//     if (support_batching) {
+//       size_ = size + 1;
+//       total_size += element_size;
+//       data_.resize(total_size);
+//
+//       if (datatype == ShapeTensorDataType::INT32) {
+//         std::memcpy(data_.data(), &total_batch_size, sizeof(int32_t));
+//         std::memcpy(
+//             data_.data() + sizeof(int32_t), data, size * sizeof(int32_t));
+//       } else if (datatype == ShapeTensorDataType::INT64) {
+//         std::memcpy(data_.data(), &total_batch_size, sizeof(int64_t));
+//         std::memcpy(
+//             data_.data() + sizeof(int64_t), data, size * sizeof(int64_t));
+//       }
+//     } else {
+//       size_ = size;
+//       data_.resize(total_size);
+//       std::memcpy(data_.data(), data, total_size);
+//     }
+//   }
+//
+//   template <typename T>
+//   std::vector<T> GetData() const
+//   {
+//     if ((datatype_ == ShapeTensorDataType::INT32 &&
+//          typeid(T) != typeid(int32_t)) ||
+//         (datatype_ == ShapeTensorDataType::INT64 &&
+//          typeid(T) != typeid(int64_t))) {
+//       throw std::runtime_error("Type mismatch");
+//     }
+//     std::vector<T> result(size_);
+//     std::memcpy(result.data(), data_.data(), size_ * sizeof(T));
+//     return result;
+//   }
+//
+//  private:
+//   std::vector<uint8_t> data_;
+//   size_t size_;
+//   ShapeTensorDataType datatype_;
+// };
+
+
+enum class ShapeTensorDataType { INT32, INT64 };
+
+class ShapeTensor {
+ public:
+  ShapeTensor()
+      : data_(nullptr), size_(0), element_cnt_(0),
+        datatype_(ShapeTensorDataType::INT32)
+  {
+  }
+
+  TRITONSERVER_Error* SetData(
+      const char* data, const TRITONSERVER_DataType datatype,
+      const int64_t element_cnt, const bool support_batching = false,
+      const size_t total_batch_size = 0)
+  {
+    element_cnt_ = element_cnt;
+    size_t datatype_size;
+
+    if (datatype == TRITONSERVER_DataType::TRITONSERVER_TYPE_INT32) {
+      datatype_size = sizeof(int32_t);
+      datatype_ = ShapeTensorDataType::INT32;
+    } else if (datatype == TRITONSERVER_DataType::TRITONSERVER_TYPE_INT64) {
+      datatype_size = sizeof(int64_t);
+      datatype_ = ShapeTensorDataType::INT64;
+    } else {
+      return TRITONSERVER_ErrorNew(
+          TRITONSERVER_ERROR_INTERNAL,
+          (std::string("Unsupported data type received for Shape tensor")));
+    }
+
+    if (support_batching) {
+      element_cnt_++;  // Account for batch size
+      size_ = element_cnt_ * datatype_size;
+      data_.reset(new char[size_]);
+
+      if (datatype_ == ShapeTensorDataType::INT32) {
+        *reinterpret_cast<int32_t*>(data_.get()) = (int32_t)total_batch_size;
+      } else if (datatype_ == ShapeTensorDataType::INT64) {
+        *reinterpret_cast<int64_t*>(data_.get()) = (int64_t)total_batch_size;
+      }
+      std::memcpy(
+          data_.get() + datatype_size, data,
+          (element_cnt_ - 1) * datatype_size);
+    } else {
+      size_ = element_cnt_ * datatype_size;
+      data_.reset(new char[size_]);
+      std::memcpy(data_.get(), data, size_);
+    }
+
+    return nullptr;
+  }
+
+  template <typename T>
+  std::vector<T> GetData() const
+  {
+    if (element_cnt_ == 0) {
+      throw std::runtime_error("ShapeTensor is empty");
+    }
+
+    size_t datatype_size;
+
+    if (datatype_ == ShapeTensorDataType::INT32 &&
+        typeid(T) == typeid(int32_t)) {
+      datatype_size = sizeof(int32_t);
+    } else if (
+        datatype_ == ShapeTensorDataType::INT64 &&
+        typeid(T) == typeid(int64_t)) {
+      datatype_size = sizeof(int64_t);
+    } else {
+      throw std::runtime_error("Type mismatch in GetData");
+    }
+
+    std::vector<T> result(element_cnt_);
+    std::memcpy(result.data(), data_.get(), element_cnt_ * datatype_size);
+    return result;
+  }
+
+  ShapeTensorDataType GetDataType() const { return datatype_; }
+  size_t GetDataType() const { return size_; }
+
+ private:
+  size_t size_;
+  int64_t element_cnt_;
+  ShapeTensorDataType datatype_;
+  std::unique_ptr<char[]> data_;
+};
+
+
 //
 // ModelInstanceState
 //
@@ -333,16 +532,16 @@ class ModelInstanceState : public TensorRTModelInstance {
 
   TRITONSERVER_Error* GetRequestShapeValues(
       size_t total_batch_size, TRITONBACKEND_Request* request,
-      std::map<int, std::vector<int32_t>>* request_shape_values);
+      std::map<int, ShapeTensor>* request_shape_values);
   TRITONSERVER_Error* GetMostOptimizedProfile(
       size_t total_batch_size, TRITONBACKEND_Request** requests,
       uint32_t request_count,
-      const std::map<int, std::vector<int32_t>>& request_shape_values,
+      const std::map<int, ShapeTensor>& request_shape_values,
       std::map<int, TensorRTContext>::iterator* citr);
   TRITONSERVER_Error* EvaluateTensorRTContext(
       std::map<int, TensorRTContext>::iterator& citr, size_t total_batch_size,
       TRITONBACKEND_Request** requests, uint32_t request_count,
-      const std::map<int, std::vector<int32_t>>& request_shape_values,
+      const std::map<int, ShapeTensor>& request_shape_values,
       int64_t* error_distance);
 
   bool SetOutputShapeTensorBuffer(

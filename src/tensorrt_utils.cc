@@ -358,11 +358,12 @@ ValidateControlDimsDynamic(
   return nullptr;
 }
 
+template <typename T>
 TRITONSERVER_Error*
 ValidateShapeValues(
-    const std::vector<int32_t>& request_shape_values,
-    const int32_t* min_shape_values, const int32_t* max_shape_values,
-    size_t nb_shape_values, const bool support_batching)
+    const std::vector<T>& request_shape_values, const int32_t* min_shape_values,
+    const int32_t* max_shape_values, size_t nb_shape_values,
+    const bool support_batching)
 {
   if (request_shape_values.size() != nb_shape_values) {
     return TRITONSERVER_ErrorNew(
