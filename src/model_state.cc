@@ -476,10 +476,9 @@ ModelState::AutoCompleteConfigHelper(const std::string& model_path)
 
     std::cerr << "\n****************" << std::endl;
     for (int i = 0; i < num_io_tensors; ++i) {
-      std::cerr  //<< "\nengine->getBindingName(i): " <<
-                 //engine->getBindingName(i)
-          << "\nengine->getIOTensorName(i): " << engine->getIOTensorName(i)
-          << "\n-----------------------" << std::endl;
+      std::cerr << "\nengine->getIOTensorName(i): "
+                << engine->getIOTensorName(i) << "\n-----------------------"
+                << std::endl;
     }
     std::cerr << "\n****************" << std::endl;
 

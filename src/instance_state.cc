@@ -1337,8 +1337,8 @@ ModelInstanceState::GetRequestShapeValues(
   uint32_t input_count;
   RETURN_IF_ERROR(TRITONBACKEND_RequestInputCount(request, &input_count));
 
-   std::cerr << "\n**************** GetRequestShapeValues() ****************\n"
-             << "input_count: " << input_count << std::endl;
+  std::cerr << "\n**************** GetRequestShapeValues() ****************\n"
+            << "input_count: " << input_count << std::endl;
   for (uint32_t i = 0; i < input_count; i++) {
     TRITONBACKEND_Input* input;
     TRITONBACKEND_RequestInputByIndex(request, i, &input);
@@ -1494,8 +1494,8 @@ ModelInstanceState::EvaluateTensorRTContext(
   RETURN_IF_ERROR(TRITONBACKEND_RequestInputCount(requests[0], &input_count));
 
   std::cerr
-       << "\n**************** EvaluateTensorRTContext() ****************\n "
-       << "input_count: " << input_count << std::endl;
+      << "\n**************** EvaluateTensorRTContext() ****************\n "
+      << "input_count: " << input_count << std::endl;
 
   for (uint32_t i = 0; i < input_count; i++) {
     TRITONBACKEND_Input* input;
@@ -2464,13 +2464,6 @@ ModelInstanceState::InitializeConfigShapeOutputBindings(
         io_binding_infos_[next_buffer_binding_set_][io_index];
     io_binding_info.SetName(io_name);
 
-    std::cerr << "\n----------"
-              << "\n io_index: " << io_index << "\n io_name: "
-              << io_name
-              //<< "\n engine_->getBindingIndex(io_name.c_str()): "
-              //<< engine_->getBindingIndex(io_name.c_str())
-              << std::endl;
-
     std::cerr
         << "\n********** InitializeConfigShapeOutputBindings() **********\n"
         << std::endl;
@@ -2884,10 +2877,8 @@ ModelInstanceState::InitializeExecuteOutputBinding(
   auto& io_binding_info = io_binding_infos_[next_buffer_binding_set_][io_index];
   io_binding_info.SetName(output_name);
 
-  std::cerr
-      << "\n############"
-      << "\n io_index: " << io_index << "\n output_name: "
-      << output_name << std::endl;
+  std::cerr << "\n############" << "\n io_index: " << io_index
+            << "\n output_name: " << output_name << std::endl;
 
   // State output is initialized before the requested output tensor.
   if (is_state) {
@@ -2905,9 +2896,8 @@ ModelInstanceState::InitializeExecuteOutputBinding(
   // Check whether the output shape is data-dependent.
   for (auto& trt_context : trt_contexts_) {
     std::cerr
-        << "------------\n io_index: "
-        << io_index
-        << "\n output_name: " << output_name 
+        << "------------\n io_index: " << io_index
+        << "\n output_name: " << output_name
         << "\n "
            "trt_context.second.context_->getTensorShape(output_name.c_str()): "
         << DimsDebugString(
