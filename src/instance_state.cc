@@ -3148,7 +3148,7 @@ ModelInstanceState::InitializeShapeInputBinding(
       return nullptr;
     }
 
-    if ((input_datatype != TRITONSERVER_TYPE_INT32) ||
+    if ((input_datatype != TRITONSERVER_TYPE_INT32) &&
         (input_datatype != TRITONSERVER_TYPE_INT64)) {
       return TRITONSERVER_ErrorNew(
           TRITONSERVER_ERROR_INVALID_ARG,
