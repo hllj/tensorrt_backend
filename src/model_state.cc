@@ -745,8 +745,6 @@ ModelState::GetProfileMaxBatchSize(
       } else {
         const int32_t* max_shapes = engine->getProfileTensorValues(
             tensor_name.c_str(), profile_index,
-        const int32_t* max_shapes = engine->getProfileTensorValues(
-            tensor_name.c_str(), profile_index,
             nvinfer1::OptProfileSelector::kMAX);
 
         std::cerr << "\n max_shapes: " << *max_shapes << std::endl;
@@ -767,7 +765,6 @@ ModelState::ExtractBatchHintFromIOConfig(
     const common::TritonJson::Value& dims, bool* config_batch_hint)
 {
   // look up corresponding io info from model
-  int num_io_tensors = engine->getNbIOTensors();
   int num_io_tensors = engine->getNbIOTensors();
 
   for (int io_index = 0; io_index < num_io_tensors; io_index++) {
