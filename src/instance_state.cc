@@ -1400,20 +1400,16 @@ ModelInstanceState::GetRequestShapeValues(
             "Un supported shape tensor data type");
       }
 
-      bool includes_batch_shape_value = false;
-      if (expected_byte_size != data_byte_size) {
-        if (expected_byte_size == (data_byte_size - datatype_size)) {
-          includes_batch_shape_value = true;
-        } else {
-          return TRITONSERVER_ErrorNew(
-              TRITONSERVER_ERROR_INVALID_ARG,
-              (std::string("shape tensor for input '") + input_name +
-               "' expected byte size is " + std::to_string(expected_byte_size) +
-               " [ or " + std::to_string(expected_byte_size + datatype_size) +
-               " if input includes batch shape value] " + ", got " +
-               std::to_string(data_byte_size))
-                  .c_str());
-        }
+      if ((expected_byte_size != data_byte_size) &&
+          (expected_byte_size != (data_byte_size - datatype_size))) {
+        return TRITONSERVER_ErrorNew(
+            TRITONSERVER_ERROR_INVALID_ARG,
+            (std::string("shape tensor for input '") + input_name +
+             "' expected byte size is " + std::to_string(expected_byte_size) +
+             " [ or " + std::to_string(expected_byte_size + datatype_size) +
+             " if input includes batch shape value] " + ", got " +
+             std::to_string(data_byte_size))
+                .c_str());
       }
 
       auto it = request_shape_values->emplace(io_index, ShapeTensor()).first;
