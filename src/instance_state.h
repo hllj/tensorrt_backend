@@ -357,8 +357,8 @@ enum class ShapeTensorDataType { INT32, INT64 };
 class ShapeTensor {
  public:
   ShapeTensor()
-      : data_(nullptr), size_(0), element_cnt_(0),
-        datatype_(ShapeTensorDataType::INT32)
+      : size_(0), element_cnt_(0), datatype_(ShapeTensorDataType::INT32),
+        data_(nullptr)
   {
   }
 
@@ -379,7 +379,7 @@ class ShapeTensor {
     } else {
       return TRITONSERVER_ErrorNew(
           TRITONSERVER_ERROR_INTERNAL,
-          (std::string("Unsupported data type received for Shape tensor")));
+          "Unsupported data type received for Shape tensor");
     }
 
     if (support_batching) {
@@ -430,7 +430,7 @@ class ShapeTensor {
   }
 
   ShapeTensorDataType GetDataType() const { return datatype_; }
-  size_t GetDataType() const { return size_; }
+  size_t GetSize() const { return size_; }
 
  private:
   size_t size_;
