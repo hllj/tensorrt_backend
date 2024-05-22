@@ -364,9 +364,14 @@ class ShapeTensor {
 
   TRITONSERVER_Error* SetData(
       const char* data, const TRITONSERVER_DataType datatype,
-      const int64_t element_cnt, const bool support_batching = false,
+      const size_t element_cnt, const bool support_batching = false,
       const size_t total_batch_size = 0)
   {
+    if (data == nullptr) {
+      return TRITONSERVER_ErrorNew(
+          TRITONSERVER_ERROR_INVALID_ARG, "Null data pointer provided");
+    }
+
     element_cnt_ = element_cnt;
     size_t datatype_size;
 
@@ -388,9 +393,11 @@ class ShapeTensor {
       data_.reset(new char[size_]);
 
       if (datatype_ == ShapeTensorDataType::INT32) {
-        *reinterpret_cast<int32_t*>(data_.get()) = (int32_t)total_batch_size;
+        *reinterpret_cast<int32_t*>(data_.get()) =
+            static_cast<int32_t>(total_batch_size);
       } else if (datatype_ == ShapeTensorDataType::INT64) {
-        *reinterpret_cast<int64_t*>(data_.get()) = (int64_t)total_batch_size;
+        *reinterpret_cast<int64_t*>(data_.get()) =
+            static_cast<int64_t>(total_batch_size);
       }
       std::memcpy(
           data_.get() + datatype_size, data,
@@ -404,37 +411,15 @@ class ShapeTensor {
     return nullptr;
   }
 
-  template <typename T>
-  std::vector<T> GetData() const
-  {
-    if (element_cnt_ == 0) {
-      throw std::runtime_error("ShapeTensor is empty");
-    }
+  const void* GetData() const { return static_cast<const void*>(data_.get()); }
 
-    size_t datatype_size;
-
-    if (datatype_ == ShapeTensorDataType::INT32 &&
-        typeid(T) == typeid(int32_t)) {
-      datatype_size = sizeof(int32_t);
-    } else if (
-        datatype_ == ShapeTensorDataType::INT64 &&
-        typeid(T) == typeid(int64_t)) {
-      datatype_size = sizeof(int64_t);
-    } else {
-      throw std::runtime_error("Type mismatch in GetData");
-    }
-
-    std::vector<T> result(element_cnt_);
-    std::memcpy(result.data(), data_.get(), element_cnt_ * datatype_size);
-    return result;
-  }
-
-  ShapeTensorDataType GetDataType() const { return datatype_; }
   size_t GetSize() const { return size_; }
+  ShapeTensorDataType GetDataType() const { return datatype_; }
+  size_t GetElementCount() const { return element_cnt_; }
 
  private:
   size_t size_;
-  int64_t element_cnt_;
+  size_t element_cnt_;
   ShapeTensorDataType datatype_;
   std::unique_ptr<char[]> data_;
 };

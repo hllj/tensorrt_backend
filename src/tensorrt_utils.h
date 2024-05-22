@@ -31,6 +31,7 @@
 #include <string>
 #include <vector>
 
+#include "instance_state.h"
 #include "triton/backend/backend_common.h"
 #include "triton/core/tritonserver.h"
 
@@ -82,6 +83,11 @@ TRITONSERVER_Error* ValidateControlDimsDynamic(
 template <typename T>
 TRITONSERVER_Error* ValidateShapeValues(
     const std::vector<T>& request_shape_values, const int32_t* min_shape_values,
+    const int32_t* max_shape_values, size_t nb_shape_values,
+    const bool support_batching);
+
+TRITONSERVER_Error* ValidateShapeValues(
+    const ShapeTensor& shape_tensor, const int32_t* min_shape_values,
     const int32_t* max_shape_values, size_t nb_shape_values,
     const bool support_batching);
 

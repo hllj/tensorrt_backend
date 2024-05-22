@@ -358,6 +358,45 @@ ValidateControlDimsDynamic(
   return nullptr;
 }
 
+TRITONSERVER_Error*
+ValidateShapeValues(
+    const ShapeTensor& shape_tensor, const int32_t* min_shape_values,
+    const int32_t* max_shape_values, size_t nb_shape_values,
+    const bool support_batching)
+{
+  if (shape_tensor.GetElementCount() != nb_shape_values) {
+    return TRITONSERVER_ErrorNew(
+        TRITONSERVER_ERROR_INVALID_ARG,
+        (std::string(
+             "mismatch between the number of shape values. Expecting ") +
+         std::to_string(nb_shape_values) + ". Got " +
+         std::to_string(shape_tensor.GetElementCount()))
+            .c_str());
+  }
+
+  switch (shape_tensor.GetDataType()) {
+    case ShapeTensorDataType::INT32: {
+      auto shape_values =
+          reinterpret_cast<const int32_t*>(shape_tensor.GetData());
+      return ValidateShapeValues<int32_t>(
+          std::vector<int32_t>(shape_values, shape_values + nb_shape_values),
+          min_shape_values, max_shape_values, nb_shape_values,
+          support_batching);
+    }
+    case ShapeTensorDataType::INT64: {
+      auto shape_values =
+          reinterpret_cast<const int64_t*>(shape_tensor.GetData());
+      return ValidateShapeValues<int64_t>(
+          std::vector<int64_t>(shape_values, shape_values + nb_shape_values),
+          min_shape_values, max_shape_values, nb_shape_values,
+          support_batching);
+    }
+    default:
+      return TRITONSERVER_ErrorNew(
+          TRITONSERVER_ERROR_INVALID_ARG,
+          "Unsupported data type for shape tensor");
+  }
+}
 
 void
 DimsToDimVec(const nvinfer1::Dims& model_dims, std::vector<int64_t>* dims)

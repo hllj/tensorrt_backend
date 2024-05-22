@@ -584,7 +584,27 @@ ModelInstanceState::Run(
     // binding then fail all requests.
     if (engine_->isShapeInferenceIO(name.c_str())) {
       auto it = request_shape_values.find(io_index);
-      if (it == request_shape_values.end()) {
+      if (it != request_shape_values.end()) {
+        err = ValidateShapeValues(
+            it->second, citr->second.min_shapes_[io_index],
+            citr->second.max_shapes_[io_index], citr->second.nb_shape_values_,
+            support_batching_);
+
+        if (err != nullptr) {
+          FAIL_ALL_AND_RETURN_IF_ERROR(
+              payload_->requests_, payload_->request_count_,
+              payload_->responses_, err,
+              "invalid shape values encountered for shape inputs");
+        } else {
+          // [FIXME] formalize it, the 'buffer_' may be set directly while
+          // forming the shape value
+          memcpy(
+              io_binding_info.GetBuffer(), it->second.GetData(),
+              it->second.GetSize());
+          citr->second.context_->setInputTensorAddress(
+              name.c_str(), io_binding_info.GetBuffer());
+        }
+      } else {
         err = TRITONSERVER_ErrorNew(
             TRITONSERVER_ERROR_INTERNAL,
             (std::string("unable to find shape values for shape input '") +
@@ -593,50 +613,6 @@ ModelInstanceState::Run(
         FAIL_ALL_AND_RETURN_IF_ERROR(
             payload_->requests_, payload_->request_count_, payload_->responses_,
             err, "missing shape values for the shape tensor");
-      }
-      if (it->second.GetDataType() == ShapeTensorDataType::INT32) {
-        auto shape_values = it->second.GetData<int32_t>();
-        err = ValidateShapeValues(
-            shape_values, citr->second.min_shapes_[io_index],
-            citr->second.max_shapes_[io_index], citr->second.nb_shape_values_,
-            support_batching_);
-
-        if (err != nullptr) {
-          FAIL_ALL_AND_RETURN_IF_ERROR(
-              payload_->requests_, payload_->request_count_,
-              payload_->responses_, err,
-              "invalid shape values encountered for shape inputs");
-        } else {
-          // [FIXME] formalize it, the 'buffer_' may be set directly while
-          // forming the shape value
-          memcpy(
-              io_binding_info.GetBuffer(), &(shape_values[0]),
-              it->second.GetSize());
-          citr->second.context_->setInputTensorAddress(
-              name.c_str(), io_binding_info.GetBuffer());
-        }
-      } else {
-        // int64_t data type
-        auto shape_values = it->second.GetData<int64_t>();
-        err = ValidateShapeValues(
-            shape_values, citr->second.min_shapes_[io_index],
-            citr->second.max_shapes_[io_index], citr->second.nb_shape_values_,
-            support_batching_);
-
-        if (err != nullptr) {
-          FAIL_ALL_AND_RETURN_IF_ERROR(
-              payload_->requests_, payload_->request_count_,
-              payload_->responses_, err,
-              "invalid shape values encountered for shape inputs");
-        } else {
-          // [FIXME] formalize it, the 'buffer_' may be set directly while
-          // forming the shape value
-          memcpy(
-              io_binding_info.GetBuffer(), &(shape_values[0]),
-              it->second.GetSize());
-          citr->second.context_->setInputTensorAddress(
-              name.c_str(), io_binding_info.GetBuffer());
-        }
       }
 
       // Skip the upcoming section if it is a shape tensor
@@ -1542,19 +1518,10 @@ ModelInstanceState::EvaluateTensorRTContext(
       if (engine_->isShapeInferenceIO(input_name)) {
         auto it = request_shape_values.find(io_index);
         if (it != request_shape_values.end()) {
-          if (it->second.GetDataType() == ShapeTensorDataType::INT32) {
-            auto shape_values = it->second.GetData<int32_t>();
-            shape_err = ValidateShapeValues(
-                shape_values, citr->second.min_shapes_[io_index],
-                citr->second.max_shapes_[io_index],
-                citr->second.nb_shape_values_, support_batching_);
-          } else {
-            auto shape_values = it->second.GetData<int64_t>();
-            shape_err = ValidateShapeValues(
-                shape_values, citr->second.min_shapes_[io_index],
-                citr->second.max_shapes_[io_index],
-                citr->second.nb_shape_values_, support_batching_);
-          }
+          shape_err = ValidateShapeValues(
+              it->second, citr->second.min_shapes_[io_index],
+              citr->second.max_shapes_[io_index], citr->second.nb_shape_values_,
+              support_batching_);
           valid_bs =
               (!support_batching_) || (((int32_t)total_batch_size >=
                                         *citr->second.min_shapes_[io_index]) &&
@@ -1588,13 +1555,15 @@ ModelInstanceState::EvaluateTensorRTContext(
               std::abs(*opt_shape_values - (int64_t)total_batch_size);
           auto it = request_shape_values.find(io_index);
           if (it->second.GetDataType() == ShapeTensorDataType::INT32) {
-            auto shape_values = it->second.GetData<int32_t>();
+            auto shape_values =
+                reinterpret_cast<const int32_t*>(it->second.GetData());
             for (size_t idx = 1; idx < citr->second.nb_shape_values_; idx++) {
               *error_distance +=
                   std::abs(*(opt_shape_values + idx) - shape_values[idx - 1]);
             }
           } else {
-            auto shape_values = it->second.GetData<int64_t>();
+            auto shape_values =
+                reinterpret_cast<const int64_t*>(it->second.GetData());
             for (size_t idx = 1; idx < citr->second.nb_shape_values_; idx++) {
               *error_distance +=
                   std::abs(*(opt_shape_values + idx) - shape_values[idx - 1]);
