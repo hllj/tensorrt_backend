@@ -604,8 +604,8 @@ ModelInstanceState::Run(
             payload_->requests_, payload_->request_count_, payload_->responses_,
             err, "invalid shape values encountered for shape inputs");
       } else {
-        // [FIXME] formalize it, the 'buffer_' may be set directly while
-        // forming the shape value
+        // [FIXME] formalize it, the 'buffer_' may be set directly while forming
+        // the shape value
         memcpy(
             io_binding_info.GetBuffer(), it->second.GetData(),
             it->second.GetSize());
