@@ -589,21 +589,6 @@ ModelInstanceState::Run(
             it->second, citr->second.min_shapes_[io_index],
             citr->second.max_shapes_[io_index], citr->second.nb_shape_values_,
             support_batching_);
-
-        if (err != nullptr) {
-          FAIL_ALL_AND_RETURN_IF_ERROR(
-              payload_->requests_, payload_->request_count_,
-              payload_->responses_, err,
-              "invalid shape values encountered for shape inputs");
-        } else {
-          // [FIXME] formalize it, the 'buffer_' may be set directly while
-          // forming the shape value
-          memcpy(
-              io_binding_info.GetBuffer(), it->second.GetData(),
-              it->second.GetSize());
-          citr->second.context_->setInputTensorAddress(
-              name.c_str(), io_binding_info.GetBuffer());
-        }
       } else {
         err = TRITONSERVER_ErrorNew(
             TRITONSERVER_ERROR_INTERNAL,
@@ -613,6 +598,19 @@ ModelInstanceState::Run(
         FAIL_ALL_AND_RETURN_IF_ERROR(
             payload_->requests_, payload_->request_count_, payload_->responses_,
             err, "missing shape values for the shape tensor");
+      }
+      if (err != nullptr) {
+        FAIL_ALL_AND_RETURN_IF_ERROR(
+            payload_->requests_, payload_->request_count_, payload_->responses_,
+            err, "invalid shape values encountered for shape inputs");
+      } else {
+        // [FIXME] formalize it, the 'buffer_' may be set directly while
+        // forming the shape value
+        memcpy(
+            io_binding_info.GetBuffer(), it->second.GetData(),
+            it->second.GetSize());
+        citr->second.context_->setInputTensorAddress(
+            name.c_str(), io_binding_info.GetBuffer());
       }
 
       // Skip the upcoming section if it is a shape tensor
