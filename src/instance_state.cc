@@ -1869,7 +1869,6 @@ ModelInstanceState::InitOptimizationProfiles()
         RETURN_IF_ERROR(GetProfileDimensions(
             tensor_name, profile_index, &res.first->second));
       }
-      std::cerr << "\n --------- " << std::endl;
     }
   }
 

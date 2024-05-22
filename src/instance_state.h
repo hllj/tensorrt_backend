@@ -367,15 +367,25 @@ class ShapeTensor {
       const int64_t element_cnt, const bool support_batching = false,
       const size_t total_batch_size = 0)
   {
+    std::cerr << "\n************************* ShapeTensor::SetData() "
+                 "***************************"
+              << "\n element_cnt: " << element_cnt
+              << "\n support_batching: " << support_batching
+              << "\n total_batch_size: " << total_batch_size << std::endl;
+
     element_cnt_ = element_cnt;
     size_t datatype_size;
 
     if (datatype == TRITONSERVER_DataType::TRITONSERVER_TYPE_INT32) {
       datatype_size = sizeof(int32_t);
       datatype_ = ShapeTensorDataType::INT32;
+      std::cerr << "\n datatype_size: " << datatype_size
+                << "\n datatype_: INT32" << std::endl;
     } else if (datatype == TRITONSERVER_DataType::TRITONSERVER_TYPE_INT64) {
       datatype_size = sizeof(int64_t);
       datatype_ = ShapeTensorDataType::INT64;
+      std::cerr << "\n datatype_size: " << datatype_size
+                << "\n datatype_: INT64" << std::endl;
     } else {
       return TRITONSERVER_ErrorNew(
           TRITONSERVER_ERROR_INTERNAL,
@@ -400,6 +410,8 @@ class ShapeTensor {
       data_.reset(new char[size_]);
       std::memcpy(data_.get(), data, size_);
     }
+    std::cerr << "****************************************************"
+              << std::endl;
 
     return nullptr;
   }
@@ -413,16 +425,27 @@ class ShapeTensor {
 
     size_t datatype_size;
 
+    std::cerr << "\n************************* ShapeTensor::GetData() "
+                 "***************************"
+              << "\n element_cnt_: " << element_cnt_ << std::endl;
+
     if (datatype_ == ShapeTensorDataType::INT32 &&
         typeid(T) == typeid(int32_t)) {
       datatype_size = sizeof(int32_t);
+      std::cerr << "\n datatype_size: " << datatype_size
+                << "\n datatype_: INT32" << std::endl;
     } else if (
         datatype_ == ShapeTensorDataType::INT64 &&
         typeid(T) == typeid(int64_t)) {
       datatype_size = sizeof(int64_t);
+      std::cerr << "\n datatype_size: " << datatype_size
+                << "\n datatype_: INT64" << std::endl;
     } else {
       throw std::runtime_error("Type mismatch in GetData");
     }
+
+    std::cerr << "****************************************************"
+              << std::endl;
 
     std::vector<T> result(element_cnt_);
     std::memcpy(result.data(), data_.get(), element_cnt_ * datatype_size);
