@@ -1359,20 +1359,16 @@ ModelInstanceState::GetRequestShapeValues(
       }
 
       size_t datatype_size;
-      size_t expected_byte_size;
       if (datatype == TRITONSERVER_DataType::TRITONSERVER_TYPE_INT32) {
-        datatype_size = sizeof(int32_t);
-        expected_byte_size =
-            element_cnt * GetByteSize(TRITONSERVER_TYPE_INT32, {1});
+        datatype_size = TRITONSERVER_DataTypeByteSize(TRITONSERVER_TYPE_INT32);
       } else if (datatype == TRITONSERVER_DataType::TRITONSERVER_TYPE_INT64) {
-        datatype_size = sizeof(int64_t);
-        expected_byte_size =
-            element_cnt * GetByteSize(TRITONSERVER_TYPE_INT64, {1});
+        datatype_size = TRITONSERVER_DataTypeByteSize(TRITONSERVER_TYPE_INT64);
       } else {
         return TRITONSERVER_ErrorNew(
             TRITONSERVER_ERROR_INVALID_ARG,
             "Un supported shape tensor data type");
       }
+      const size_t expected_byte_size = element_cnt * datatype_size;
 
       if ((expected_byte_size != data_byte_size) &&
           (expected_byte_size != (data_byte_size - datatype_size))) {
