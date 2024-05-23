@@ -298,9 +298,7 @@ class ShapeTensor {
         *reinterpret_cast<int64_t*>(data_.get()) =
             static_cast<int64_t>(total_batch_size);
       }
-      std::memcpy(
-          data_.get() + datatype_size, data,
-          (element_cnt_ - 1) * datatype_size);
+      std::memcpy(data_.get() + datatype_size, data, (size_ - datatype_size));
     } else {
       size_ = element_cnt_ * datatype_size;
       data_.reset(new char[size_]);
