@@ -2479,14 +2479,14 @@ ModelInstanceState::InitializeConfigShapeOutputBindings(
     for (auto& trt_context : trt_contexts_) {
       auto& context = trt_context.second;
 
-      std::cerr
-        << "------------\n io_index: " << io_index
-        << "\n output_name: " << io_name
-        << "\n "
-           "trt_context.second.context_->getTensorShape(output_name.c_str()): "
-        << DimsDebugString(
-               trt_context.second.context_->getTensorShape(io_name.c_str()))
-        << std::endl;
+      std::cerr << "------------\n io_index: " << io_index
+                << "\n output_name: " << io_name
+                << "\n "
+                   "trt_context.second.context_->getTensorShape(output_name.c_"
+                   "str()): "
+                << DimsDebugString(trt_context.second.context_->getTensorShape(
+                       io_name.c_str()))
+                << std::endl;
 
       if (io_binding_info.IsBufferAllocated()) {
         return TRITONSERVER_ErrorNew(
