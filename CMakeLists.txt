@@ -190,6 +190,10 @@ FOREACH(p ${TRITON_TENSORRT_LIB_PATHS})
     set(TRITON_TENSORRT_LDFLAGS ${TRITON_TENSORRT_LDFLAGS} "-L${p}")
 ENDFOREACH(p)
 
+set(CMAKE_PREFIX_PATH "/usr/local/tensorrt/lib")
+include_directories(/usr/local/tensorrt/include/)
+link_directories(/usr/local/tensorrt/lib/)
+
 find_library(NVINFER_LIBRARY NAMES nvinfer)
 find_library(NVINFER_PLUGIN_LIBRARY NAMES nvinfer_plugin)
 target_link_libraries(
